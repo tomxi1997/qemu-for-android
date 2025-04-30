@@ -1,0 +1,36 @@
+name: Sync Docker Version
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 0 * * 0'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check For New Version
+      run: |
+        OLD_VERSION=$(cat VERSION)
+        DOCKER_BUILD_SCRIPT="https://raw.githubusercontent.com/termux/termux-packages/refs/heads/master/root-packages/docker/build.sh"
+        NEW_VERSION=$(curl -sL $DOCKER_BUILD_SCRIPT | awk -F '=1:' '/TERMUX_PKG_VERSION=1:/ {print $2}')
+        if [ "$OLD_VERSION" != "$NEW_VERSION" ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          echo $NEW_VERSION > VERSION
+          git add .
+          git commit -m "Update docker to $NEW_VERSION"
+          git push 
+          REPO_VERSION=${GITHUB_REF_NAME#v}
+          NEXT_VERSION=$(semver bump $REPO_VERSION)
+          git tag $NEXT_VERSION
+          git push origin "v$NEXT_VERSION"
+
+        else
+          echo "No new version found. Exiting."
+          exit 0
+        fi
+

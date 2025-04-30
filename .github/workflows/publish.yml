@@ -1,0 +1,65 @@
+name: Build Docker for Android
+
+on:
+  push:
+    tags:
+      - "*"
+  workflow_dispatch:
+  
+permissions:
+  contents: write
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Checkout Termux Code
+      uses: actions/checkout@v4
+      with:
+        repository: termux/termux-packages
+        fetch-depth: 1
+        path: termux-packages
+    
+    - name: Build Qemu
+      run: |
+        cd termux-packages
+        sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
+        sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
+        sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./packages/docker/build.sh
+        sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./packages/docker/build.sh
+        patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
+        ./scripts/run-docker.sh ./build-package.sh -i --format pacman qemu-system-x86_64-headless
+        cd output
+        bash $GITHUB_WORKSPACE/package.sh
+        mv package.tar.xz $GITHUB_WORKSPACE/module/package.tar.xz
+    
+    - name: Update module.prop
+      run: |
+        TAG="${{ github.ref_name }}"
+        VERSION=${TAG#v}
+        sed -i "s/^version=.*/version=${VERSION}/" $GITHUB_WORKSPACE/module/module.prop
+
+    - name: Create Module
+      run: |
+        cd module
+        zip -9 -r "$GITHUB_WORKSPACE/Magisk-Dockerd-${{ github.ref_name }}.zip" ./
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        append_body: true
+        generate_release_notes: true
+        make_latest: ${{ github.ref_name }} !=  main
+        files: |
+          ./Magisk-Dockerd-${{ github.ref_name }}.zip
+        name: ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+
