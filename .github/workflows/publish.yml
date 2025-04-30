@@ -18,17 +18,10 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Checkout Termux Code
-      uses: actions/checkout@v4
-      with:
-        repository: termux/termux-packages
-        fetch-depth: 1
-        path: termux-packages
-  
-  
     
     - name: Build Qemu
       run: |
+      git clone https://github.com/termux/termux-packages termux-packages
         cd termux-packages
         ls 
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
