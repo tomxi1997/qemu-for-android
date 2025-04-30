@@ -24,14 +24,17 @@ jobs:
         repository: termux/termux-packages
         fetch-depth: 1
         path: termux-packages
+  
+  
     
     - name: Build Qemu
       run: |
         cd termux-packages
+        ls 
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
         sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
         patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
-        ./scripts/run-docker.sh ./build-package.sh -i --format pacman qemu-system-x86_64-headless
+        ./scripts/run-docker.sh ./build-package.sh -i --format pacman qemu-system-x86_64
         cd output
         bash $GITHUB_WORKSPACE/package.sh
         mv package.tar.xz $GITHUB_WORKSPACE/module/package.tar.xz
