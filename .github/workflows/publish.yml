@@ -21,7 +21,7 @@ jobs:
     
     - name: Build Qemu
       run: |
-      git clone https://github.com/termux/termux-packages termux-packages
+        git clone https://github.com/termux/termux-packages termux-packages
         cd termux-packages
         ls 
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
