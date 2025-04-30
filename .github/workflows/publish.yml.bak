@@ -30,6 +30,8 @@ jobs:
         cd termux-packages
         sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./root-packages/docker/build.sh
         sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./root-packages/docker/build.sh
+        sed -i 's/TERMUX_PKG_VERSION=1:/TERMUX_PKG_VERSION=/' ./packages/docker/build.sh
+        sed -i 's/${TERMUX_PKG_VERSION:2}/${TERMUX_PKG_VERSION}/g' ./packages/docker/build.sh
         patch -p1 < $GITHUB_WORKSPACE/patches/docker.patch
         ./scripts/run-docker.sh ./build-package.sh -i --format pacman qemu-system-x86_64-headless
         cd output
